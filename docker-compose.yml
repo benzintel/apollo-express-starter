@@ -1,0 +1,57 @@
+version: "3.1"
+services:
+
+  app-service:
+    build: ./
+    container_name: node-service
+
+  webserver:
+    image: nginx:latest
+    container_name: webserver
+    working_dir: /usr/src/app
+    volumes:
+        - ./docker-service/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - app-service
+      - mysqlDB
+      - redis
+  
+  mysqlDB:
+    image: mysql
+    container_name: mysqlDB
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: database_name
+      MYSQL_USER: benzintel
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+  
+  mongo:
+    image: mongo
+    container_name: mongoDB
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: my_database
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes: 
+      # - ./docker-service/mongo/mongo-init.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
+      - ./mongodbdata:/data/db
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:5.0.0
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker-service/redis/redis.conf:/etc/redis/redis.conf
+
+volumes:
+  mongodbdata:
